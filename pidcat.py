@@ -46,6 +46,7 @@ parser.add_argument('-t', '--tag', dest='tag', action='append', help='Filter out
 parser.add_argument('-i', '--ignore-tag', dest='ignored_tag', action='append', help='Filter output by ignoring specified tag(s)')
 parser.add_argument('-v', '--version', action='version', version='%(prog)s ' + __version__, help='Print the version number and exit')
 parser.add_argument('-a', '--all', dest='all', action='store_true', default=False, help='Print all log messages')
+parser.add_argument('-p', '--pid', metavar='PID', dest='pids', action='append', help='Filter output by specified PID')
 
 args = parser.parse_args()
 min_level = LOG_LEVELS_MAP[args.min_level.upper()]
@@ -66,7 +67,7 @@ if args.current_app:
   running_package_name = re.search(".*TaskRecord.*A[= ]([^ ^}]*)", system_dump).group(1)
   package.append(running_package_name)
 
-if len(package) == 0:
+if len(package) == 0 and not args.pids:
   args.all = True
 
 # Store the names of packages for which to match all processes.
@@ -251,6 +252,9 @@ def parse_start_proc(line):
 
 def tag_in_tags_regex(tag, tags):  
   return any(re.match(r'^' + t + r'$', tag) for t in map(str.strip, tags))
+
+if args.pids:
+  pids.update(args.pids)
 
 ps_command = base_adb_command + ['shell', 'ps']
 ps_pid = subprocess.Popen(ps_command, stdin=PIPE, stdout=PIPE, stderr=PIPE)
